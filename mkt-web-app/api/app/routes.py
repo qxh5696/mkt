@@ -91,3 +91,13 @@ def update_question():
     # Add the new question to the data base under the same id
     db.session.add(new_question)
     db.session.commit()
+    return {'response': 200}
+
+
+@app.route('/deleteQuestion', methods=['POST'])
+def delete_question():
+    content = request.json
+    question_id = content['id']
+    q = Question.query.get(question_id)
+    db.session.delete(q)
+    return {'response': 200}
