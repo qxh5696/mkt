@@ -15,6 +15,10 @@ class QuestionManagementPage extends Component {
         this.addQuestion = this.addQuestion.bind(this);    
     }
     
+    componentDidMount() {
+        this.fetchQuestions();
+    }
+
     fetchQuestions() {
         fetch('/questions')
         .then(response => response.json())
@@ -37,10 +41,6 @@ class QuestionManagementPage extends Component {
         }).then((response) => {
             return response.json();
         });
-    }
-
-    componentDidMount() {
-        this.fetchQuestions();
     }
 
     render() {
@@ -97,7 +97,7 @@ class QuestionManagementPage extends Component {
                 <div className='question-section'>
                     {!isLoading ? (
                         questions.map(question_object => {
-                            return <QuestionSubComponent questionObject={question_object} />
+                            return <QuestionSubComponent questionObject={question_object} key={`question-${question_object.id}`} />
                         })
                     ) : (
                         <h3>Loading Questions...</h3>

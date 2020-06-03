@@ -1,8 +1,9 @@
 from app import app, db
-from app.models import Question
+from app.models import Question, Exam
 from question_parsing.parse import random_with_n_digits
 from flask import request
 import time
+from utility_functions import create_json_objects as utils
 
 
 @app.route('/time')
@@ -12,7 +13,46 @@ def get_current_time():
 
 @app.route('/exams', methods=['GET'])
 def get_exams():
-    return {'exams': ['exam1', 'exam2', 'exam3']}
+    exams = Exam.query.all()
+    all_exams = []
+    for e in exams:
+        all_exams.append(utils.create_exam_json_object(e))
+    return {'exams': all_exams}
+
+
+@app.route('/exam', methods=['POST'])
+def get_exam():
+    content = request.json
+    exam_id = int(content['id'])
+    e = Exam.query.get(exam_id)
+    return {'exam': utils.create_exam_json_object(e)}
+
+
+@app.route('/addExam', methods=['POST'])
+def add_exam():
+    content = request.json
+    course = content['course']
+    name = content['name']
+    subject = content['subject']
+    question_ids = content['questions']
+    total_points = 0
+    for q in question_ids.split(','):
+        question_dict = Question.query.get(int(q))
+        total_points += question_dict['points']
+
+    ex = Exam(id=random_with_n_digits(10),
+             course=course,
+             subject=subject,
+             name=name,
+             points=total_points,
+             question_ids=question_ids
+        )
+    try:
+        db.session.add(ex)
+        db.session.commit()
+        return {'response': 200}
+    except Exception as e:
+        return {'response': 500, 'message': e}
 
 
 @app.route('/questions', methods=['GET'])
@@ -65,7 +105,7 @@ def update_question():
     content = request.json
 
     # Find the old instance and delete it
-    question_id = content['id']
+    question_id = int(content['id'])
     q = Question.query.get(question_id)
     db.session.delete(q)
 
@@ -97,7 +137,7 @@ def update_question():
 @app.route('/deleteQuestion', methods=['POST'])
 def delete_question():
     content = request.json
-    question_id = content['id']
+    question_id = int(content['id'])
     q = Question.query.get(question_id)
     db.session.delete(q)
     return {'response': 200}

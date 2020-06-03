@@ -51,9 +51,10 @@ class QuestionSubComponent extends Component {
     }
 
     render() {
-        const { id, name, points, question, solution } = this.state.questionObject;
+        const { isLoading } = this.state;
+        const { name, points, question, solution } = this.state.questionObject;
         return (
-            <div key={`question-${id}`}>
+            <div>
                 {this.state.isEditting ? (
                 <div>  
                     <form className='question-form'>

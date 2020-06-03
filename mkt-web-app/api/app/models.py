@@ -23,6 +23,7 @@ class Exam(db.Model):
     course = db.Column(db.String(64), index=True)
     subject = db.Column(db.String(64), index=True)
     name = db.Column(db.String(64))
+    points = db.Column(db.Integer)
     questions = db.Column(db.Text())
 
     def __repr__(self):

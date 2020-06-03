@@ -24,3 +24,5 @@ Icon\r
 .settings/settings.json
 .vscode/launch.json
 /venv/
+.idea/*
+mkt-web-app/api/.idea/*
