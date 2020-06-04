@@ -1,5 +1,5 @@
 import React from 'react';
-import ExamSubComponent from './subComponents/examElement';
+import StringUtils from '../utilities/stringUtilities';
  
 class ExamManagementPage extends React.Component {
     constructor(props) {
@@ -7,18 +7,17 @@ class ExamManagementPage extends React.Component {
         this.state = {
             questions: [],
             exams: [],
-            currentExam: {
-                questionIds: []
-            },
+            currentExam: {},
             newExam: {
-                questionIds: []
+                questions: []
             },
             isLoading: true,
             errors: null,
             isEditting: false,
         };
-        this.addQuestionToExam = this.addQuestionToExam.bind(this);
         this.generateExam = this.generateExam.bind(this);     
+        this.trackExamChange = this.trackExamChange.bind(this);
+        this.examPreview = this.examPreview.bind(this);
     }
 
     componentDidMount() {
@@ -27,24 +26,55 @@ class ExamManagementPage extends React.Component {
     }
 
     addQuestionToExam(questionObject) {
-        if (this.isEditting) {
+        let updatedQuestions = this.state.questions.filter(question => question.id != questionObject.id)
+        if (this.state.isEditting) {
             this.setState({
+                questions: updatedQuestions,
                 currentExam: {
                     ...this.state.currentExam,
-                    questionIds: [
-                        ...this.state.questionIds,
-                        questionObject.id
+                    questions: [
+                        ...this.state.currentExam.questions,
+                        questionObject
                     ]
                 }
             });
         } else {
             this.setState({
+                questions: updatedQuestions,
                 newExam: {
                     ...this.state.newExam,
-                    questionIds: [
-                        ...this.state.questionIds,
-                        questionObject.id
+                    questions: [
+                        ...this.state.newExam.questions,
+                        questionObject
                     ]
+                }
+            });
+        }
+    }
+
+    removeQuestionFromExam(questionObject) {
+        if (this.state.isEditting) {
+            let updatedExamQuestions = this.state.currentExam.questions.filter(question => question.id != questionObject.id);
+            this.setState({
+                questions: [
+                    ...this.state.questions,
+                    questionObject
+                ],
+                currentExam: {
+                    ...this.state.currentExam,
+                    questions: updatedExamQuestions
+                }
+            });
+        } else {
+            let updatedExamQuestions = this.state.newExam.questions.filter(question => question.id != questionObject.id);
+            this.setState({
+                questions: [
+                    ...this.state.questions,
+                    questionObject
+                ],
+                newExam: {
+                    ...this.state.newExam,
+                    questions: updatedExamQuestions
                 }
             });
         }
@@ -94,26 +124,109 @@ class ExamManagementPage extends React.Component {
         })
         .then(response => response.json());
     }
+
+    trackExamChange(event) {
+        const col = StringUtils.convertIdToJSONKey(event.target.id);
+        const val = event.target.value;
+        if (this.state.isEditting) {
+            this.setState({
+                currentExam: {
+                    ...this.state.currentExam,
+                    [col]: val
+                }
+            });
+        } else {
+            this.setState({
+                newExam: {
+                    ...this.state.newExam,
+                    [col]: val
+                }
+            });
+        }
+    }
+
+    examPreview(exam) {
+        // Only show the items in the list 
+        let questionIDSet = Set()
+        for (var i = 0; i < exam.questions.length; i++ ){
+            questionIDSet.add(exam.questions[i].id);
+        }
+        let newQuestionsList = this.state.questions.filter(question => !questionIDSet.has(question.id));
+        this.setState({
+            questions: newQuestionsList
+        });
+        return (
+            <div>
+                <form className='exam-form'>
+                    <div className='form-group row'>
+                        <label htmlFor='course' className='col-sm-1 col-form-label'>Course:</label>
+                        <div className='col-md-2 mb-3'>
+                            <input 
+                                type='text'
+                                className='form-control' 
+                                id='exam-course' 
+                                defaultValue={exam.examCourse}
+                                onChange={this.trackExamChange} />
+                        </div>
+                        <label htmlFor='exam-subject' className='col-sm-1 col-form-label'>Subject:</label>
+                        <div className='col-md-2 mb-3'>
+                            <input 
+                                type='text' 
+                                className='form-control' 
+                                id='exam-subject'
+                                defaultValue={exam.examSubject}
+                                onChange={this.trackExamChange} />
+                        </div>
+                    </div>
+                    <div className='form-group row'>
+                        <label htmlFor='exam-name' className='col-sm-1 col-form-label'>Exam Name:</label>
+                        <div className='col-sm-2'>
+                            <input 
+                                type='text' 
+                                className='form-control' 
+                                id='exam-name'
+                                defaultValue={exam.name} 
+                                onChange={this.trackExamChange} />
+                        </div>
+                    </div>
+                    <div className='exam-questions'>
+                        <label htmlFor='questions'>Questions:</label>
+                        {exam.questions.map(
+                            (question, idx) => {
+                                const {id, name, points, ques, solution} = question; 
+                                return (
+                                    <div key={`question-${idx}`}>
+                                        <p>Name: {name}</p>
+                                        <p>Points: {points} </p>
+                                        <p>Question: {ques}</p>
+                                        <p>Solution: {solution}</p>
+                                        <button className='btn btn-danger' onClick={() => {
+                                            this.removeQuestionFromExam(question);
+                                        }}>
+                                                    Remove Question</button>
+                                    </div>
+                                )
+                            }
+                            )}
+                    </div>
+                </form>
+                {this.state.isEditting ? (<button className="btn btn-primary"> Save </button>) 
+                : (<button className="btn btn-primary"> Generate Exam </button>)}
+            </div>
+        )
+    }
     
     render() {
         return (
             <div>
                 <div className='exam-preview'>
-                    {this.state.isEditting ? 
-                        (
-                            <div className='is-editting'>
-                                <ExamSubComponent exam_object={this.state.currentExam} />
-                            </div>
-                        ) :
-                        (   <div className='is-not-editting'>
-                                <ExamSubComponent exam_object={this.state.newExam}/>
-                                
-                            </div>
-                    )}
+                    {!this.state.isEditting ? this.examPreview(this.state.newExam) : this.examPreview(this.state.currentExam)}
                 </div>
                 <div className='previous-exams'>
                     {!this.state.isLoading ? (
-                        this.state.exams.map((exam_object) => {
+                        this.state.exams.length == 0 ?
+                         (<div> No Exams to Display </div>) : 
+                         (this.state.exams.map((exam_object) => {
                             const { id, name, points, course, subject } = exam_object; 
                             return (
                                 <div class='exam-entry' key={`${id}`}>
@@ -127,10 +240,10 @@ class ExamManagementPage extends React.Component {
                                             currentExam: exam_object
                                          });
                                         }}> Edit Exam</button>
-                                    <button className="btn btn-secondary" onClick={() => { this.setState({ isEditting: false })}}> Cancel </button>
+                                    <button className="btn btn-secondary"> Cancel </button>
                                 </div>
                             )
-                        })
+                        }))                        
                     ) : (
                         <h3>Loading Exams...</h3>
                     )}
@@ -140,12 +253,12 @@ class ExamManagementPage extends React.Component {
                         this.state.questions.map((questionObject) => {
                             const { id, name, points, question, solution } = questionObject;
                             return (
-                                <div key={`${id}`}>
+                                <div key={`${id}`} style={'display: none'}>
                                     <p>Name: {name}</p>
                                     <p>Points: {points}</p>
                                     <p>Question: {question}</p>
                                     <p>Solution: {solution}</p>
-                                    <button className="btn btn-primary" type="submit" onClick={this.addQuestionToExam(questionObject)}>Add Question To Exam</button>
+                                    <button className="btn btn-primary" type="submit" onClick={() => { this.addQuestionToExam(questionObject); }}>Add Question To Exam</button>
                                 </div>
                             )
                         })

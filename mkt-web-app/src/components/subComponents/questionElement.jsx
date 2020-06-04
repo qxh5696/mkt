@@ -51,7 +51,6 @@ class QuestionSubComponent extends Component {
     }
 
     render() {
-        const { isLoading } = this.state;
         const { name, points, question, solution } = this.state.questionObject;
         return (
             <div>
