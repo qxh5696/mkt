@@ -12,7 +12,8 @@ class QuestionManagementPage extends Component {
             newQuestion: {},
             errors: null
         };
-        this.addQuestion = this.addQuestion.bind(this);    
+        this.addQuestion = this.addQuestion.bind(this);
+        this.updateNewQuestion = this.updateNewQuestion.bind(this);    
     }
     
     componentDidMount() {
@@ -43,9 +44,20 @@ class QuestionManagementPage extends Component {
         });
     }
 
+    updateNewQuestion(event) {
+        const col = event.target.id;
+        const val = event.target.value;
+        this.setState({
+            newQuestion: { 
+                ...this.state.newQuestion,
+                [col]: val
+             } 
+        });
+        console.log(this.state.newQuestion);
+    }
+
     render() {
         const { questions, isLoading, error } = this.state;
-
         return (
             <div>
                 <form className='question-form'>
@@ -97,7 +109,7 @@ class QuestionManagementPage extends Component {
                 <div className='question-section'>
                     {!isLoading ? (
                         questions.map(question_object => {
-                            return <QuestionSubComponent questionObject={question_object} key={`question-${question_object.id}`} />
+                            return <QuestionSubComponent questionObject={question_object} key={`question-${question_object._id['$oid']}`} />
                         })
                     ) : (
                         <h3>Loading Questions...</h3>

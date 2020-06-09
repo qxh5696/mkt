@@ -26,7 +26,7 @@ class ExamManagementPage extends React.Component {
     }
 
     addQuestionToExam(questionObject) {
-        let updatedQuestions = this.state.questions.filter(question => question.id != questionObject.id)
+        let updatedQuestions = this.state.questions.filter(question => question.id !== questionObject.id)
         if (this.state.isEditting) {
             this.setState({
                 questions: updatedQuestions,
@@ -53,8 +53,9 @@ class ExamManagementPage extends React.Component {
     }
 
     removeQuestionFromExam(questionObject) {
+        // e.preventDefault();
         if (this.state.isEditting) {
-            let updatedExamQuestions = this.state.currentExam.questions.filter(question => question.id != questionObject.id);
+            const updatedExamQuestions = this.state.currentExam.questions.filter(question => question.id !== questionObject.id);
             this.setState({
                 questions: [
                     ...this.state.questions,
@@ -66,7 +67,7 @@ class ExamManagementPage extends React.Component {
                 }
             });
         } else {
-            let updatedExamQuestions = this.state.newExam.questions.filter(question => question.id != questionObject.id);
+            const updatedExamQuestions = this.state.newExam.questions.filter(question => question.id !== questionObject.id);
             this.setState({
                 questions: [
                     ...this.state.questions,
@@ -89,6 +90,16 @@ class ExamManagementPage extends React.Component {
             body: JSON.stringify(this.state.newExam)
         })
         .then(response => response.json());
+        this.setState({
+            newExam: {
+                questions: []
+            }
+        })
+        this.fetchQuestions();
+    }
+
+    saveExam() {
+        console.log('saving...')
     }
 
     fetchQuestions() {
@@ -146,15 +157,6 @@ class ExamManagementPage extends React.Component {
     }
 
     examPreview(exam) {
-        // Only show the items in the list 
-        let questionIDSet = Set()
-        for (var i = 0; i < exam.questions.length; i++ ){
-            questionIDSet.add(exam.questions[i].id);
-        }
-        let newQuestionsList = this.state.questions.filter(question => !questionIDSet.has(question.id));
-        this.setState({
-            questions: newQuestionsList
-        });
         return (
             <div>
                 <form className='exam-form'>
@@ -193,25 +195,24 @@ class ExamManagementPage extends React.Component {
                         <label htmlFor='questions'>Questions:</label>
                         {exam.questions.map(
                             (question, idx) => {
-                                const {id, name, points, ques, solution} = question; 
+                                const {name, points, ques, solution} = question; 
                                 return (
                                     <div key={`question-${idx}`}>
                                         <p>Name: {name}</p>
                                         <p>Points: {points} </p>
                                         <p>Question: {ques}</p>
                                         <p>Solution: {solution}</p>
-                                        <button className='btn btn-danger' onClick={() => {
-                                            this.removeQuestionFromExam(question);
-                                        }}>
-                                                    Remove Question</button>
+                                        <div className='btn btn-danger' 
+                                                onClick={() => {this.removeQuestionFromExam(question)}}>
+                                                    Remove Question</div>
                                     </div>
                                 )
                             }
                             )}
                     </div>
                 </form>
-                {this.state.isEditting ? (<button className="btn btn-primary"> Save </button>) 
-                : (<button className="btn btn-primary"> Generate Exam </button>)}
+                {this.state.isEditting ? (<div className="btn btn-primary" onClick={() => {this.saveExam()}}> Save </div>) 
+                : (<div className="btn btn-primary" onClick={() => {this.generateExam()}}> Generate Exam </div>)}
             </div>
         )
     }
@@ -224,7 +225,7 @@ class ExamManagementPage extends React.Component {
                 </div>
                 <div className='previous-exams'>
                     {!this.state.isLoading ? (
-                        this.state.exams.length == 0 ?
+                        this.state.exams.length === 0 ?
                          (<div> No Exams to Display </div>) : 
                          (this.state.exams.map((exam_object) => {
                             const { id, name, points, course, subject } = exam_object; 
@@ -251,9 +252,9 @@ class ExamManagementPage extends React.Component {
                 <div className='question-section'>
                     {!this.state.isLoading ? (
                         this.state.questions.map((questionObject) => {
-                            const { id, name, points, question, solution } = questionObject;
+                            const { _id, name, points, question, solution } = questionObject;
                             return (
-                                <div key={`${id}`} style={'display: none'}>
+                                <div key={`${_id['$oid']}`}>
                                     <p>Name: {name}</p>
                                     <p>Points: {points}</p>
                                     <p>Question: {question}</p>

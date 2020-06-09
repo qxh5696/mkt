@@ -10,7 +10,7 @@ class StringUtils {
 
     static convertIdToJSONKey(htmlId) {
         var htmlIdSplit = htmlId.split('-');
-        if (htmlIdSplit.length == 1) {
+        if (htmlIdSplit.length === 1) {
             return htmlIdSplit[0]
         }
         for (var i = 1; i < htmlIdSplit.length; i++) {
