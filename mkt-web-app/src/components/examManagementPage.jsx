@@ -26,7 +26,7 @@ class ExamManagementPage extends React.Component {
     }
 
     addQuestionToExam(questionObject) {
-        let updatedQuestions = this.state.questions.filter(question => question.id !== questionObject.id)
+        let updatedQuestions = this.state.questions.filter(question => question._id['$oid'] !== questionObject._id['$oid'])
         if (this.state.isEditting) {
             this.setState({
                 questions: updatedQuestions,
@@ -53,9 +53,8 @@ class ExamManagementPage extends React.Component {
     }
 
     removeQuestionFromExam(questionObject) {
-        // e.preventDefault();
         if (this.state.isEditting) {
-            const updatedExamQuestions = this.state.currentExam.questions.filter(question => question.id !== questionObject.id);
+            const updatedExamQuestions = this.state.currentExam.questions.filter(question => question._id['$oid'] !== questionObject._id['$oid']);
             this.setState({
                 questions: [
                     ...this.state.questions,
@@ -67,7 +66,7 @@ class ExamManagementPage extends React.Component {
                 }
             });
         } else {
-            const updatedExamQuestions = this.state.newExam.questions.filter(question => question.id !== questionObject.id);
+            const updatedExamQuestions = this.state.newExam.questions.filter(question => question._id['$oid'] !== questionObject._id['$oid']);
             this.setState({
                 questions: [
                     ...this.state.questions,
@@ -96,6 +95,7 @@ class ExamManagementPage extends React.Component {
             }
         })
         this.fetchQuestions();
+        this.fetchExams();
     }
 
     saveExam() {
@@ -115,7 +115,7 @@ class ExamManagementPage extends React.Component {
     }
 
     fetchExams() {
-        fetch('/exams')
+        fetch('/getExams')
         .then(response => response.json())
         .then(data => 
                 this.setState({
@@ -126,12 +126,12 @@ class ExamManagementPage extends React.Component {
     }
 
     fetchExam(exam_object) {
-        fetch('/exam', {
+        fetch('/getExam', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({'id': exam_object.id})
+            body: JSON.stringify({'_id': exam_object._id['$oid']})
         })
         .then(response => response.json());
     }
@@ -154,6 +154,16 @@ class ExamManagementPage extends React.Component {
                 }
             });
         }
+    }
+
+    deleteExam(exam_object) {
+        fetch('/deleteExam', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({'_id': exam_object._id['$oid']})
+        })
     }
 
     examPreview(exam) {
@@ -187,7 +197,7 @@ class ExamManagementPage extends React.Component {
                                 type='text' 
                                 className='form-control' 
                                 id='exam-name'
-                                defaultValue={exam.name} 
+                                defaultValue={exam.examName} 
                                 onChange={this.trackExamChange} />
                         </div>
                     </div>
@@ -210,9 +220,14 @@ class ExamManagementPage extends React.Component {
                             }
                             )}
                     </div>
+                    {this.state.isEditting ? (
+                        <div>
+                            <div className="btn btn-primary" onClick={() => {this.saveExam()}}> Save </div>
+                            <button className="btn btn-secondary" onClick={() => {}}> Cancel </button>
+                        </div>
+                    ) 
+                : (<button className="btn btn-primary" onClick={() => {this.generateExam()}}> Generate Exam </button>)}
                 </form>
-                {this.state.isEditting ? (<div className="btn btn-primary" onClick={() => {this.saveExam()}}> Save </div>) 
-                : (<div className="btn btn-primary" onClick={() => {this.generateExam()}}> Generate Exam </div>)}
             </div>
         )
     }
@@ -228,20 +243,21 @@ class ExamManagementPage extends React.Component {
                         this.state.exams.length === 0 ?
                          (<div> No Exams to Display </div>) : 
                          (this.state.exams.map((exam_object) => {
-                            const { id, name, points, course, subject } = exam_object; 
+                            const { _id, examCourse, examSubject, examName } = exam_object; 
                             return (
-                                <div class='exam-entry' key={`${id}`}>
-                                    <div>Exam name: {name}</div>
-                                    <div>Course: {course} </div>
-                                    <div>Subject: {subject}</div>
-                                    <div>Points: {points}</div>
+                                <div class='exam-entry' key={`${_id['$oid']}`}>
+                                    <div>Exam name: {examName}</div>
+                                    <div>Course: {examCourse} </div>
+                                    <div>Subject: {examSubject}</div>
                                     <button className="btn btn-primary" onClick={() => { 
                                         this.setState({ 
                                             isEditting: true,
                                             currentExam: exam_object
                                          });
                                         }}> Edit Exam</button>
-                                    <button className="btn btn-secondary"> Cancel </button>
+                                    <button className="btn btn-danger" onClick={() => {
+                                        
+                                    }}> Delete Exam</button>
                                 </div>
                             )
                         }))                        

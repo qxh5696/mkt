@@ -45,7 +45,7 @@ class QuestionSubComponent extends Component {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({id : this.state.questionObject._id['$oid']})
+            body: JSON.stringify({'_id' : this.state.questionObject._id['$oid']})
         }).then((response) => {
             return response.json();
         });
