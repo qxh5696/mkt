@@ -1,14 +1,6 @@
 import NetworkUtils from './networkUtilities';
 
-class CommonBackendCalls {
-    fetchQuestions() {
-        NetworkUtils.commonGet('/questions', 
-        (data) => { return data['questions']},
-        (error) => { return error });
-    }
 
-    
-
+export function fetchQuestions() {
+    return NetworkUtils.commonGet('/questions');
 }
-
-export default CommonBackendCalls;

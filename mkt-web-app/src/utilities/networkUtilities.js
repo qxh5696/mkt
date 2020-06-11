@@ -11,11 +11,11 @@ class NetworkUtils {
         .then(response => response.json());
     }
     
-    static commonGet(url, successCallBack, errorCallBack) {
+    static commonGet(url, onFetchComplete, onFetchFailure) {
         fetch(url)
             .then(response => response.json())
-            .then(data => successCallBack(data))
-            .catch(error => errorCallBack(error));
+            .then(data => onFetchComplete(data))
+            .catch(error => onFetchFailure(error));
     }
 }
 

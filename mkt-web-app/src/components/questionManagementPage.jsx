@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import QuestionSubComponent from './subComponents/questionElement';
-// import '../assets/css/questionManagementPage.css';
+import { fetchQuestions } from '../utilities/commonBackendCalls';
+import NetworkUtils from '../utilities/networkUtilities';
 
 
 class QuestionManagementPage extends Component {
@@ -17,31 +18,16 @@ class QuestionManagementPage extends Component {
     }
     
     componentDidMount() {
-        this.fetchQuestions();
-    }
-
-    fetchQuestions() {
-        fetch('/questions')
-        .then(response => response.json())
-        .then(data =>
+        NetworkUtils.commonGet('/questions', (data) => {
             this.setState({
                 questions: data['questions'],
                 isLoading: false,
-            })
-        )
-        .catch(error => this.setState({ error, isLoading: false }));
+            });
+        });
     }
 
     addQuestion() {
-        fetch('/addQuestion', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(this.state.newQuestion)
-        }).then((response) => {
-            return response.json();
-        });
+        NetworkUtils.commonPost('/addQuestion', this.state.newQuestion);
     }
 
     updateNewQuestion(event) {
@@ -53,7 +39,6 @@ class QuestionManagementPage extends Component {
                 [col]: val
              } 
         });
-        console.log(this.state.newQuestion);
     }
 
     render() {
