@@ -1,38 +1,23 @@
 import React from 'react';
 import NetworkUtils from '../utilities/networkUtilities';
 import StringUtils from '../utilities/stringUtilities';
-import {arraySubtraction}  from '../utilities/arrayUtilities';
+import { arraySubtraction }  from '../utilities/arrayUtilities';
  
 class ExamGenerationPage extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
             questions: [],
+            isLoading: false,
             examObject: {
                 questions: []
-            } 
+            },
+            errors: null, 
         }
     }
 
     componentDidMount() {
         this.loadQuestions();    
-    }
-
-    generateExam() {
-        fetch('/addExam', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(this.state.examObject)
-        })
-        .then(response => response.json());
-        this.setState({
-            examObject: {
-                questions: []
-            }
-        })
-        this.loadQuestions();
     }
 
     loadQuestions() {
@@ -44,7 +29,7 @@ class ExamGenerationPage extends React.Component {
         });
     }
 
-    trackExamChange(event) {
+    trackExamChange = (event) => {
         const col = StringUtils.convertIdToJSONKey(event.target.id);
         const val = event.target.value;
         this.setState({
@@ -158,7 +143,19 @@ class ExamGenerationPage extends React.Component {
         );
     }
 
-    newExamView() {
+    // Unique functions
+
+    generateExam() {
+        NetworkUtils.commonPost('/addExam', this.state.examObject);
+        this.setState({
+            examObject: {
+                questions: []
+            }
+        })
+        this.loadQuestions();
+    }
+
+    render() {
         return (
             <div>
                 <div className='exam-section'>
@@ -173,10 +170,6 @@ class ExamGenerationPage extends React.Component {
                 </div>   
             </div>
         );
-    }
-
-    render() {
-        return this.newExamView();
     }
     
 }

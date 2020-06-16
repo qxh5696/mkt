@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import NetworkUtils from '../../utilities/networkUtilities';
 import StringUtils from '../../utilities/stringUtilities';
-import {arraySubtraction}  from '../../utilities/arrayUtilities';
+import { arraySubtraction }  from '../../utilities/arrayUtilities';
 import { createBrowserHistory as createHistory } from 'history'
 
 class ExamEditView extends Component {
@@ -12,15 +12,25 @@ class ExamEditView extends Component {
             questions: [],
             examObject: props.examObject,
             isLoading: true,
+            errors: null,
         }
-        this.trackExamChange = this.trackExamChange.bind(this);
     }
 
     componentDidMount() {
         this.loadQuestions();    
     }
 
-    trackExamChange(event) {
+    loadQuestions() {
+        NetworkUtils.commonGet('/questions', (data) => {
+            const questionsNotInExam = arraySubtraction(data['questions'], this.state.examObject.questions);
+            this.setState({
+                questions: questionsNotInExam,
+                isLoading: false,
+            });
+        });
+    }
+
+    trackExamChange = (event) => {
         const col = StringUtils.convertIdToJSONKey(event.target.id);
         const val = event.target.value;
         this.setState({
@@ -59,16 +69,6 @@ class ExamEditView extends Component {
         });
     }
 
-    loadQuestions() {
-        NetworkUtils.commonGet('/questions', (data) => {
-            const questionsNotInExam = arraySubtraction(data['questions'], this.state.examObject.questions);
-            this.setState({
-                questions: questionsNotInExam,
-                isLoading: false,
-            });
-        });
-    }
-
     renderQuestions() {
         return (
             <div>
@@ -87,11 +87,6 @@ class ExamEditView extends Component {
                 })};
             </div>
         );
-    }
-
-    saveExam() {
-        NetworkUtils.commonPost('/updateExam', this.state.examObject);
-        createHistory().go(0);
     }
 
     renderExamObject() {
@@ -157,7 +152,14 @@ class ExamEditView extends Component {
         );
     }
 
-    editExamView() {
+    // Unique functions
+
+    saveExam() {
+        NetworkUtils.commonPost('/updateExam', this.state.examObject);
+        createHistory().go(0);
+    }
+
+    render() {
         return (
             <div>
                 <div className='exam-section'>
@@ -174,11 +176,8 @@ class ExamEditView extends Component {
                         this.renderQuestions()
                     )}
                 </div>   
-            </div>);
-    }
-
-    render() {
-        return this.editExamView();
+            </div>
+        );
     }
 }
 
