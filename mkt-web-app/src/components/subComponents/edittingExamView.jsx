@@ -1,47 +1,23 @@
-import React from 'react';
-import NetworkUtils from '../utilities/networkUtilities';
-import StringUtils from '../utilities/stringUtilities';
-import {arraySubtraction}  from '../utilities/arrayUtilities';
- 
-class ExamGenerationPage extends React.Component {
+import React, { Component } from 'react';
+import { Redirect } from 'react-router-dom';
+import NetworkUtils from '../../utilities/networkUtilities';
+import StringUtils from '../../utilities/stringUtilities';
+import {arraySubtraction}  from '../../utilities/arrayUtilities';
+import { createBrowserHistory as createHistory } from 'history'
+
+class ExamEditView extends Component {
     constructor(props) {
-        super(props)
+        super(props);
         this.state = {
             questions: [],
-            examObject: {
-                questions: []
-            } 
+            examObject: props.examObject,
+            isLoading: true,
         }
+        this.trackExamChange = this.trackExamChange.bind(this);
     }
 
     componentDidMount() {
         this.loadQuestions();    
-    }
-
-    generateExam() {
-        fetch('/addExam', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(this.state.examObject)
-        })
-        .then(response => response.json());
-        this.setState({
-            examObject: {
-                questions: []
-            }
-        })
-        this.loadQuestions();
-    }
-
-    loadQuestions() {
-        NetworkUtils.commonGet('/questions', (data) => {
-            const questionsNotInExam = arraySubtraction(data['questions'], this.state.examObject.questions);
-            this.setState({
-                questions: questionsNotInExam
-            })
-        });
     }
 
     trackExamChange(event) {
@@ -68,7 +44,7 @@ class ExamGenerationPage extends React.Component {
             }
         });
     }
-    
+
     removeQuestionFromExam(questionObject) {
         const updatedExamQuestions = this.state.examObject.questions.filter(question => question._id['$oid'] !== questionObject._id['$oid']);
         this.setState({
@@ -82,26 +58,43 @@ class ExamGenerationPage extends React.Component {
             }
         });
     }
-    
+
+    loadQuestions() {
+        NetworkUtils.commonGet('/questions', (data) => {
+            const questionsNotInExam = arraySubtraction(data['questions'], this.state.examObject.questions);
+            this.setState({
+                questions: questionsNotInExam,
+                isLoading: false,
+            });
+        });
+    }
 
     renderQuestions() {
         return (
-            this.state.questions.map((questionObject) => {
-                const { _id, name, points, question, solution } = questionObject;
-                return (
-                    <div key={`${_id['$oid']}`}>
-                        <p>Name: {name}</p>
-                        <p>Points: {points}</p>
-                        <p>Question: {question}</p>
-                        <p>Solution: {solution}</p>
-                        <button className="btn btn-primary" type="submit" onClick={() => { this.addQuestionToExam(questionObject); }}>Add Question To Exam</button>
-                    </div>
-                )
-            })
+            <div>
+                <h1>Questions: </h1>
+                {this.state.questions.map((questionObject) => {
+                    const { _id, name, points, question, solution } = questionObject;
+                    return (
+                        <div key={`${_id['$oid']}`}>
+                            <p>Name: {name}</p>
+                            <p>Points: {points}</p>
+                            <p>Question: {question}</p>
+                            <p>Solution: {solution}</p>
+                            <button className="btn btn-primary" type="submit" onClick={() => { this.addQuestionToExam(questionObject); }}>Add Question To Exam</button>
+                        </div>
+                    );
+                })};
+            </div>
         );
     }
 
-    renderNewExamForm() {
+    saveExam() {
+        NetworkUtils.commonPost('/updateExam', this.state.examObject);
+        createHistory().go(0);
+    }
+
+    renderExamObject() {
         return (
             <div>
                 <form className='exam-form'>
@@ -111,7 +104,8 @@ class ExamGenerationPage extends React.Component {
                             <input 
                                 type='text'
                                 className='form-control' 
-                                id='exam-course'
+                                id='exam-course' 
+                                defaultValue={this.state.examObject.examCourse}
                                 onChange={this.trackExamChange} />
                         </div>
                         <label htmlFor='exam-subject' className='col-sm-1 col-form-label'>Subject:</label>
@@ -120,6 +114,7 @@ class ExamGenerationPage extends React.Component {
                                 type='text' 
                                 className='form-control' 
                                 id='exam-subject'
+                                defaultValue={this.state.examObject.examSubject}
                                 onChange={this.trackExamChange} />
                         </div>
                     </div>
@@ -129,7 +124,8 @@ class ExamGenerationPage extends React.Component {
                             <input 
                                 type='text' 
                                 className='form-control' 
-                                id='exam-name' 
+                                id='exam-name'
+                                defaultValue={this.state.examObject.examName} 
                                 onChange={this.trackExamChange} />
                         </div>
                     </div>
@@ -152,33 +148,38 @@ class ExamGenerationPage extends React.Component {
                             }
                             )}
                     </div>
-                    <button className="btn btn-primary" onClick={() => {this.generateExam()}}> Generate Exam </button>
+                    <div>
+                        <div className="btn btn-primary" onClick={() => {this.saveExam()}}> Save </div>
+                        <button className="btn btn-secondary" onClick={() => { return <Redirect to='/examManagement'/> }}> Cancel </button>
+                    </div>
                 </form>
             </div>
         );
     }
 
-    newExamView() {
+    editExamView() {
         return (
             <div>
                 <div className='exam-section'>
-                    {this.renderNewExamForm()}
+                    {this.state.isLoading ? (
+                        <h3>Loading Exams...</h3>
+                    ) : (
+                        this.renderExamObject()
+                    )}
                 </div>
                 <div className='question-section'>
-                    {!this.state.isLoading ? (
-                        this.renderQuestions()
+                    {this.state.isLoading ? (
+                        <h3>Loading Questions...</h3>                
                     ) : (
-                        <h3>Loading Questions...</h3>
+                        this.renderQuestions()
                     )}
                 </div>   
-            </div>
-        );
+            </div>);
     }
 
     render() {
-        return this.newExamView();
+        return this.editExamView();
     }
-    
 }
- 
-export default ExamGenerationPage;
+
+export default ExamEditView;

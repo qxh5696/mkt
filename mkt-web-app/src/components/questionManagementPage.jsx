@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import QuestionSubComponent from './subComponents/questionElement';
-import { fetchQuestions } from '../utilities/commonBackendCalls';
 import NetworkUtils from '../utilities/networkUtilities';
 
 

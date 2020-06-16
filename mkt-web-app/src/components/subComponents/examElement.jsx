@@ -9,6 +9,34 @@ class ExamSubComponent extends Component {
         }
     }
 
+    addQuestionToExam(questionObject) {
+        let updatedQuestions = this.state.questions.filter(question => question._id['$oid'] !== questionObject._id['$oid'])
+        this.setState({
+            questions: updatedQuestions,
+            examObject: {
+                ...this.state.examObject,
+                questions: [
+                    ...this.state.examObject.questions,
+                    questionObject
+                ]
+            }
+        });
+    }
+
+    removeQuestionFromExam(questionObject) {
+        const updatedExamQuestions = this.state.examObject.questions.filter(question => question._id['$oid'] !== questionObject._id['$oid']);
+        this.setState({
+            questions: [
+                ...this.state.questions,
+                questionObject
+            ],
+            examObject: {
+                ...this.state.examObject,
+                questions: updatedExamQuestions
+            }
+        });
+    }
+
     trackExamChange(event) {
         const col = event.target.id;
         const val = event.target.value;
@@ -68,7 +96,7 @@ class ExamSubComponent extends Component {
                                         <p>Question: {ques}</p>
                                         <p>Solution: {solution}</p>
                                         <button className='btn btn-danger' 
-                                                onClick={() => { console.log('removing quesion' + id); }}>
+                                                onClick={() => { this.removeQuestionFromExam(question) }}>
                                                     Remove Question</button>
                                     </div>
                                 )

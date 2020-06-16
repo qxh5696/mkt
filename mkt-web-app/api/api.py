@@ -52,7 +52,7 @@ def get_exams():
 def update_exam():
     content = request.json
     question_ids = [q['_id']['$oid'] for q in content['questions']]
-    query = {'_id': ObjectId(content['_id'])}
+    query = {'_id': ObjectId(content['_id']['$oid'])}
     content['question_ids'] = question_ids
     del content['questions']
     try:
