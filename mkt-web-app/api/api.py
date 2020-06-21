@@ -1,8 +1,9 @@
 import time
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_pymongo import PyMongo
 import json
 from bson import json_util, ObjectId
+from latexrender import create_latex_file
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/MKTDataBase"
@@ -14,6 +15,7 @@ def get_current_time():
     return {'time': time.time()}
 
 
+# Exam Routes
 @app.route('/getExam', methods=['GET'])
 def get_exam():
     content = request.json
@@ -73,7 +75,7 @@ def add_exam():
     print('Exam Object:', content)
     try:
         mongo.db.exams.insert(content)
-        return {'response': 200}
+        return {'response': 200, }
     except Exception as e:
         return {'response': 500, 'message': e}
 
@@ -91,6 +93,14 @@ def delete_exam():
         return {'response': 500, 'message': e}
 
 
+@app.route('/getExamPreview', methods=['POST'])
+def post_exam_preview():
+    content = request.json
+    exam_url = create_latex_file(content)
+    return send_file(exam_url, mimetype='application/pdf')
+
+
+# Question Routes
 @app.route('/questions', methods=['GET'])
 def get_questions():
     all_questions = []

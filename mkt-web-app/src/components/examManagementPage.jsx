@@ -1,6 +1,7 @@
 import React from 'react';
 import NetworkUtils from '../utilities/networkUtilities';
 import ExamEditView from './subComponents/edittingExamView';
+import ExamPreviewWindow from './subComponents/examPreview';
  
 class ExamManagementPage extends React.Component {
     constructor(props) {
@@ -9,7 +10,9 @@ class ExamManagementPage extends React.Component {
             exams: [],
             isLoading: true,
             isEditting: false,
+            isShowingPreview: false,
             errors: null,
+            pdf: null,
         };
     }
 
@@ -37,6 +40,17 @@ class ExamManagementPage extends React.Component {
         NetworkUtils.commonPost('/deleteExam', {'_id': examObject._id['$oid']});
     }
 
+    createExamPreview(examObject) {
+        NetworkUtils.postWithJSONResponse('/getExamPreview', examObject,
+        (data) => {
+            const preview = data['examPreview'];
+            console.log(preview !== undefined);
+        },
+        (error) => {
+            console.log(error);
+        });
+    }
+
     showExams() {
         if (this.state.exams.length === 0) {
             return (<div> No Exams to Display </div>);
@@ -52,13 +66,19 @@ class ExamManagementPage extends React.Component {
                     <div>Total Points: {points}</div>
                     <button className="btn btn-primary" onClick={() => { 
                         this.setState({ 
+                            currentExam: examObject,
                             isEditting: true,
-                            currentExam: examObject
                          });
                         }}> Edit Exam</button>
                     <button className="btn btn-danger" onClick={() => {
-                        this.deleteExam();
+                        this.deleteExam(examObject);
                     }}> Delete Exam</button>
+                    <button className="btn btn-secondary" onClick={() => {
+                        this.setState({
+                            currentExam: examObject,
+                            isShowingPreview: true
+                        })
+                    }}>Create exam preview</button>
                 </div>
             )
         }));
@@ -67,6 +87,22 @@ class ExamManagementPage extends React.Component {
     showExamsOrEditView() {
         if (this.state.isEditting) {
             return <ExamEditView examObject={this.state.currentExam}></ExamEditView>;
+        } else if (this.state.isShowingPreview) {
+            return (
+                <div>
+                    <ExamPreviewWindow examObject={this.state.currentExam} 
+                                    onPreviewCompleted={(pdfLink) => {
+                                        this.setState({pdf: pdfLink});
+                                    }}></ExamPreviewWindow>
+                    <a className="btn btn-primary" href={this.state.pdf}>Download Exam PDF</a>
+                    <button className="btn btn-danger" onClick={() => {
+                        this.setState({
+                            isShowingPreview: false
+                        })
+                    }}>Exit Exam Preview</button>
+                </div>
+            
+            )
         }
         return this.showExams();
     }
