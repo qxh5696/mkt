@@ -1,5 +1,6 @@
 import os
 from pdf2image import convert_from_path
+from functools import reduce
 
 
 def create_latex_file(exam_object):
@@ -10,14 +11,27 @@ def create_latex_file(exam_object):
     exam_id = exam_object['_id']['$oid']
     os.system('mkdir {}'.format(exam_id))
     os.chdir(os.getcwd() + '/' + exam_id)
+    total_points = 0
+    for q in exam_object['questions']:
+        total_points += int(q['points'])
     with open(tex_file_name, 'w') as f:
         f.write('\\documentclass{article}\n')
         f.write('\\begin{document}\n')
+        f.write('\\title{' + exam_object['examName'] + '}\n\n\n')
+        f.write('\\author{' +
+                exam_object['examCourse'] + '\\\\' +
+                exam_object['examSubject'] + '\\\\' +
+                'Rochester Institute of Technology CS Department' + '\\\\' +
+        '}\n\n\n')
+        f.write('Total Exam Points: {}\n\n'.format(total_points))
         for i, q in enumerate(exam_object['questions']):
-            f.write('{}. '.format(i))
-            f.write(q['ques'])
-            f.write('\n\n\n')
-        f.write('Hello Palo Alto!\n')
+            f.write('{} (Points: {}). '.format(i+1, q['points']))
+            f.write(q['question'])
+            space = '\n'
+            if q['questionType'] == 'longAnswer':
+                space *= 5
+            f.write(space)
+        # f.write('Hello Palo Alto!\n')
         f.write('\\end{document}\n')
 
     x = os.system('pdflatex {}'.format(tex_file_name))

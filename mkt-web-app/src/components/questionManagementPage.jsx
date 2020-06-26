@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import QuestionSubComponent from './subComponents/questionElement';
 import NetworkUtils from '../utilities/networkUtilities';
+import '../assets/scss/questionManagementPage.css';
+import  { QuestionSearchBar } from './subComponents/questionSearchBar';
+import { questionSearchFilter } from '../utilities/searchBarFunctionalityUtility';
 
 
 class QuestionManagementPage extends Component {
@@ -10,7 +13,14 @@ class QuestionManagementPage extends Component {
             questions: [],
             isLoading: true,
             newQuestion: {},
-            errors: null
+            errors: null,
+            displayQuestions: [],
+            questionSearchTerms: {
+                name: '',
+                type: '',
+                subject: '',
+                course: '',
+            }
         };
         this.addQuestion = this.addQuestion.bind(this);
         this.updateNewQuestion = this.updateNewQuestion.bind(this);    
@@ -20,6 +30,7 @@ class QuestionManagementPage extends Component {
         NetworkUtils.commonGet('/questions', (data) => {
             this.setState({
                 questions: data['questions'],
+                displayQuestions: data['questions'],
                 isLoading: false,
             });
         });
@@ -40,10 +51,32 @@ class QuestionManagementPage extends Component {
         });
     }
 
+    searchForQuestion = (e) => {
+        this.setState({
+            questionSearchTerms: {
+                ...this.state.questionSearchTerms,
+                [e.target.name]: e.target.value
+            } 
+        });
+        
+        const newQuestionsList = questionSearchFilter(
+                this.state.questions, 
+                this.state.questionSearchTerms.name,
+                this.state.questionSearchTerms.subject,
+                this.state.questionSearchTerms.type,
+                this.state.questionSearchTerms.course                        
+            );
+        
+        this.setState({
+            displayQuestions: newQuestionsList
+        });
+    }
+
     render() {
-        const { questions, isLoading, error } = this.state;
+        const { displayQuestions, isLoading, error } = this.state;
         return (
-            <div>
+            <div className='container'>
+                <h1>Question Form</h1>
                 <form className='question-form'>
                     <div className='form-group row'>
                         <label htmlFor='course' className='col-sm-1 col-form-label'>Course:</label>
@@ -88,11 +121,12 @@ class QuestionManagementPage extends Component {
                     </div>
                     <button className="btn btn-primary" type="submit" onClick={this.addQuestion}>Add Question </button>
                 </form>
-                <hr/>
                 {error ? <p>{error.message}</p> : null}
+                <h1>Question Bank</h1>
+                {QuestionSearchBar(this.searchForQuestion)}
                 <div className='question-section'>
                     {!isLoading ? (
-                        questions.map(question_object => {
+                        displayQuestions.map(question_object => {
                             return <QuestionSubComponent questionObject={question_object} key={`question-${question_object._id['$oid']}`} />
                         })
                     ) : (
